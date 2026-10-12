@@ -461,7 +461,7 @@ table.events tr:last-child td { border-bottom: 0; }
       </section>
 
       <footer class="fine">
-        <p><strong>How the simulation works.</strong> Months are simulated one by one. Each month you add money (or take your payout), then the portfolio grows by the average return. With market swings on, each month also gets a random shock sized so that yearly returns vary by the swing setting; the typical (median) market still grows at the average return. 400 markets are simulated with the same random numbers until you roll a new one. Payouts and life-event costs are entered in today's money and grow with inflation. A crash drops the market by the chosen amount, then the market climbs back to its normal path over the recovery period. Taxes are ignored.</p>
+        <p><strong>How the simulation works.</strong> Months are simulated one by one. Each month you add money (or take your payout), then the portfolio grows by the average return. With market swings on, each month also gets a random shock sized so that yearly returns vary by the swing setting; the typical (median) market still grows at the average return. 400 markets are simulated with the same random numbers until you roll a new one. Payouts and life-event costs are entered in today's money and grow with inflation. A crash drops the market by the chosen amount, then the market climbs back to its normal path over the recovery period. The brochure line keeps the same payouts but assumes a steady return, no fees and no life events, so you can see how long the marketed scenario would last. Taxes are ignored.</p>
         <p><strong>Where the defaults come from.</strong> US stocks returned about 10% a year from 1926 to 2024 before inflation, with single years ranging from +54% to −43% (<a href="https://www.dimensional.com/insights/the-uncommon-average" target="_blank" rel="noopener">Dimensional, “The Uncommon Average”</a>). After inflation that is roughly 7% a year, with yearly swings of 15–20%. The 4% rule comes from the 1998 Trinity study: withdrawing 4% of the starting pot, raised each year with inflation, lasted 30 years in about 95% of historical periods (<a href="https://financialplanningassociation.org/article/journal/AUG15-sustainable-retirement-spending-low-interest-rates-updating-trinity-study" target="_blank" rel="noopener">Journal of Financial Planning</a>).</p>
         <p>Past performance does not predict future returns. This is a toy for building intuition, not financial advice.</p>
       </footer>
@@ -648,7 +648,7 @@ table.events tr:last-child td { border-bottom: 0; }
     model = {
       ctx, plan, broch, market, pathIdx, sample, sampleDepl, seq, success, lastM, view,
       V: {
-        plan: view(plan.bal), broch: view(broch), own: view(plan.deposits),
+        plan: view(plan.bal), broch: view(broch.bal), own: view(plan.deposits),
         bands: market ? market.bands.map(view) : null,
         sample: sample ? view(sample) : null,
       },
@@ -880,7 +880,7 @@ table.events tr:last-child td { border-bottom: 0; }
   function renderKpis() {
     const { ctx, plan, broch, market, success } = model;
     const R = ctx.R, ra = ctx.retireAge, real = isReal();
-    const bN = broch[R], bR = bN / ctx.infl[R];
+    const bN = broch.bal[R], bR = bN / ctx.infl[R];
     setKpi('k1', `The brochure at ${ra}`, money(real ? bR : bN), state.layers.inflation
       ? (real ? ['Shown in the brochure as ', strong(money(bN))] : ['Worth ', strong(money(bR)), ' in today\'s money'])
       : ['Steady ' + state.ret + '% a year, nothing ever goes wrong']);
@@ -904,8 +904,8 @@ table.events tr:last-child td { border-bottom: 0; }
     const d = plan.depl;
     setKpi('k3', 'Steady market: money runs out', d < 0 ? `Past ${ctx.horizon}` : `At ${Math.floor(deplAge(d))}`,
       d < 0
-        ? ['Payout never drains the pot', state.layers.market ? '. Real markets are not steady.' : '']
-        : [`${Math.max(0, deplAge(d) - ra).toFixed(1)} years of payouts`, state.layers.inflation ? `, starting at ${money(ctx.payout[R])}/mo and rising with prices` : ` of ${money(state.payout)}/mo`]);
+        ? ['Payout never drains the pot. ', brochureVerdict(broch)]
+        : [`${Math.max(0, deplAge(d) - ra).toFixed(1)} years of payouts. `, brochureVerdict(broch)]);
     const k4 = document.getElementById('k4');
     if (success === null) {
       setKpi('k4', `Lasts until ${state.lastTo}?`, d < 0 || deplAge(d) >= state.lastTo ? 'Yes' : 'No', ['In a steady market. Turn on market swings to test luck.']);
@@ -916,6 +916,11 @@ table.events tr:last-child td { border-bottom: 0; }
       const v = k4.querySelector('.k-value');
       v.append(h('span', { class: 'status ' + cls, text: word }));
     }
+  }
+
+  function brochureVerdict(broch) {
+    const b = broch.depl;
+    return h('span', {}, 'The brochure: ', strong(b < 0 ? `never runs out` : `runs out at ${Math.floor(deplAge(b))}`));
   }
 
   function renderPayoutHint() {
@@ -1083,6 +1088,20 @@ table.events tr:last-child td { border-bottom: 0; }
         G.annot.append('text').attr('class', 'lbl-crit halo').attr('x', dx).attr('y', y0 - 12).attr('text-anchor', dx > W - M.right - 60 ? 'end' : 'middle').text(`⚠ Runs out at ${Math.floor(deplAge(plan.depl))}`);
       }
     }
+    if (show.broch && retOn) {
+      const bd = model.broch.depl;
+      if (bd >= 0) {
+        const bx = x(deplAge(bd));
+        G.annot.append('circle').attr('class', 'dot-broch').attr('cx', bx).attr('cy', y0).attr('r', 5);
+        const near = show.plan && plan.depl >= 0 && Math.abs(x(deplAge(plan.depl)) - bx) < 130;
+        G.annot.append('text').attr('class', 'lbl-small halo').attr('x', bx).attr('y', y0 - (near ? 46 : 12)).attr('text-anchor', bx > W - M.right - 70 ? 'end' : 'middle').text(`brochure runs out at ${Math.floor(deplAge(bd))}`);
+      } else {
+        const endV = V.broch[ctx.M], top = y.domain()[1];
+        const ey = endV > top ? M.top + 26 : y(endV) - 10;
+        G.annot.append('text').attr('class', 'lbl-small halo').attr('x', W - M.right - 4).attr('y', ey).attr('text-anchor', 'end')
+          .text(`${endV > top ? '↑ ' : ''}brochure never runs out: ${money(endV)} at ${ctx.horizon}`);
+      }
+    }
     if (show.sample && sampleDepl >= 0) {
       const sx = x(deplAge(sampleDepl));
       G.annot.append('circle').attr('class', 'dot-sample').attr('cx', sx).attr('cy', y0).attr('r', 4.5);
@@ -1240,7 +1259,7 @@ table.events tr:last-child td { border-bottom: 0; }
     hoverLine.style('display', null).attr('x1', cx).attr('x2', cx).attr('y1', plotBox.M.top - 6).attr('y2', plotBox.y0);
     const rows = [];
     const dots = [];
-    if (s.show.brochure && i <= ctx.R) { rows.push(tipRow('broch', money(V.broch[i]), 'The brochure')); dots.push(['dot-broch', V.broch[i]]); }
+    if (s.show.brochure) { rows.push(tipRow('broch', money(V.broch[i]), 'The brochure')); dots.push(['dot-broch', Math.min(V.broch[i], Y.domain()[1])]); }
     if (s.show.plan) { rows.push(tipRow('plan', money(V.plan[i]), 'Your plan, steady')); dots.push(['dot-plan', V.plan[i]]); }
     if (s.show.band && V.bands) {
       rows.push(tipRow('band', money(V.bands[2][i]), 'Typical market'));

@@ -114,11 +114,16 @@
   }
 
   function brochure(ctx) {
-    const s = ctx.s, g = Math.pow(1 + s.ret / 100, 1 / 12), out = new Float64Array(ctx.R + 1);
-    let b = s.initial;
+    const s = ctx.s, g = Math.pow(1 + s.ret / 100, 1 / 12), out = new Float64Array(ctx.M + 1);
+    let b = s.initial, depl = -1;
     out[0] = b;
-    for (let m = 0; m < ctx.R; m++) { b = (b + s.monthly) * g; out[m + 1] = b; }
-    return out;
+    for (let m = 0; m < ctx.M; m++) {
+      if (m < ctx.R) b += s.monthly;
+      else if (depl < 0) { if (b <= ctx.payout[m]) { b = 0; depl = m; } else b -= ctx.payout[m]; }
+      b *= g;
+      out[m + 1] = b;
+    }
+    return { bal: out, depl };
   }
 
   const QS = [0.1, 0.25, 0.5, 0.75, 0.9];
