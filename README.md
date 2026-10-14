@@ -1,8 +1,8 @@
-# Investment Playground v1 · Hockey Stick Playground
+# Because Life Happens v1 · Hockey Stick Playground
 
 Every investing talk shows the same chart: money goes in, the line curves up, a huge number at 65. This playground starts from that chart and lets you switch on what it leaves out.
 
-Live: https://investment-playground-v1.surge.sh · Simpler version: [v2](https://github.com/Meldiron/investment-playground-v2)
+Live: https://investment-playground-v1.surge.sh · Simpler version: [v2](https://github.com/Meldiron/because-life-happens-v2)
 
 - **Retirement payouts** – stop investing at a chosen age, take a monthly payout, and see when the money runs out. The brochure line keeps going too, so you can see how long the marketed scenario would last.
 - **Life events** – drag a down payment, new car, kitchen, pet surgery and more onto the timeline. Pay by pausing contributions or by selling investments, and compare the cost of each.
