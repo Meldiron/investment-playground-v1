@@ -2,7 +2,7 @@
 
 Every investing talk shows the same chart: money goes in, the line curves up, a huge number at 65. This playground starts from that chart and lets you switch on what it leaves out.
 
-Live: https://investment-playground-v1.surge.sh · Simpler version: [v2](https://github.com/Meldiron/because-life-happens-v2)
+Live: https://investment-playground-v1.surge.sh · Simpler version: [Because Life Happens](https://github.com/Meldiron/because-life-happens)
 
 - **Retirement payouts** – stop investing at a chosen age, take a monthly payout, and see when the money runs out. The brochure line keeps going too, so you can see how long the marketed scenario would last.
 - **Life events** – drag a down payment, new car, kitchen, pet surgery and more onto the timeline. Pay by pausing contributions or by selling investments, and compare the cost of each.
